@@ -1,0 +1,171 @@
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="jumbotron p-5 mb-4 bg-light rounded-3">
+            <div class="container-fluid py-4">
+                <h1 class="display-5 fw-bold">News Bookmark</h1>
+                <p class="col-md-8 fs-4">Search for news articles from around the world and save them for reading later.
+                </p>
+                <a href="/search" class="btn btn-primary btn-lg">Search Articles</a>
+                <% if (!user) { %>
+                    <a href="/register" class="btn btn-outline-primary btn-lg ms-2">Sign Up</a>
+                    <% } else { %>
+                        <a href="/bookmarks" class="btn btn-outline-primary btn-lg ms-2">My Bookmarks</a>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Recent Articles</h2>
+
+<div class="row" id="recent-articles">
+    <div class="col-12">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="article-template">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <img src="" class="card-img-top article-image" alt="Article image">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title article-title"></h5>
+                <p class="text-muted mb-1 article-source"></p>
+                <p class="text-muted mb-2 article-date"></p>
+                <p class="card-text article-description"></p>
+                <div class="mt-auto">
+                    <a href="#" class="btn btn-primary article-link" target="_blank">Read More</a>
+                    <button class="btn btn-outline-primary bookmark-btn ms-2" data-id="">
+                        <i class="bi bi-bookmark"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch recent articles
+        fetchRecentArticles();
+
+        // Add event listener for bookmark buttons
+        document.getElementById('recent-articles').addEventListener('click', function (e) {
+            // Check if clicked element is a bookmark button
+            if (e.target.closest('.bookmark-btn')) {
+                e.preventDefault();
+                const btn = e.target.closest('.bookmark-btn');
+                const articleId = btn.dataset.id;
+                toggleBookmark(articleId, btn);
+            }
+        });
+    });
+
+    // Fetch recent articles from API
+    async function fetchRecentArticles() {
+        try {
+            const response = await fetch('/api/articles?limit=6');
+            const data = await response.json();
+
+            if (data.articles && data.articles.length > 0) {
+                renderArticles(data.articles);
+            } else {
+                document.getElementById('recent-articles').innerHTML = `<div class="col-12">
+                    <p> No articles found.</p>
+    </div>`;
+            }
+        } catch (error) {
+            console.error('Error fetching articles:', error);
+            document.getElementById('recent-articles').innerHTML = `<div class="col-12">
+                <p class="text-danger"> Error loading articles.Please try again later.</p>
+    </div>`;
+        }
+    }
+
+    // Render articles using template
+    function renderArticles(articles) {
+        const container = document.getElementById('recent-articles');
+        container.innerHTML = '';
+        const template = document.getElementById('article-template');
+
+        articles.forEach(article => {
+            const clone = template.content.cloneNode(true);
+
+            // Set article data
+            clone.querySelector('.article-title').textContent = article.title;
+            clone.querySelector('.article-source').textContent = article.sourceName;
+            clone.querySelector('.article-date').textContent = new Date(article.publishedAt).toLocaleDateString();
+            clone.querySelector('.article-description').textContent = article.description;
+            clone.querySelector('.article-link').href = article.url;
+
+            // Set article image or fallback
+            const imgElement = clone.querySelector('.article-image');
+            if (article.urlToImage) {
+                imgElement.src = article.urlToImage;
+            } else {
+                imgElement.src = '/images/news-placeholder.png';
+            }
+            imgElement.onerror = function () {
+                this.src = '/images/news-placeholder.png';
+            };
+
+            // Set bookmark button data
+            const bookmarkBtn = clone.querySelector('.bookmark-btn');
+            bookmarkBtn.dataset.id = article.id;
+
+            container.appendChild(clone);
+        });
+    }
+
+    // Toggle bookmark
+    async function toggleBookmark(articleId, button) {
+        // We don't need to check for token since we're using cookies
+        // but keep localStorage token for compatibility with API requests
+        const token = localStorage.getItem('token');
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // Add Authorization header if token exists in localStorage
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            const response = await fetch('/api/bookmarks', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ articleId })
+            });
+
+            if (response.ok) {
+                button.innerHTML = '<i class="bi bi-bookmark-fill"></i> Saved';
+                button.classList.replace('btn-outline-primary', 'btn-success');
+            } else {
+                const data = await response.json();
+
+                // If unauthorized, redirect to login
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // If already bookmarked, show as saved
+                if (response.status === 409) {
+                    button.innerHTML = '<i class="bi bi-bookmark-fill"></i> Saved';
+                    button.classList.replace('btn-outline-primary', 'btn-success');
+                } else {
+                    alert(data.error || 'Failed to save bookmark');
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+            alert('Failed to save bookmark. Please try again.');
+        }
+    }
+</script>

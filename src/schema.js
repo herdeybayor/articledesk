@@ -47,3 +47,33 @@ export const bookmarks = sqliteTable("bookmarks", {
         .notNull()
         .default(sql`CURRENT_TIMESTAMP`), // When the bookmark was created
 });
+
+/**
+ * User preferences table schema
+ * Stores user preferences for article filters
+ */
+export const userPreferences = sqliteTable("user_preferences", {
+    id: int("id").primaryKey({ autoIncrement: true }),
+    userId: int("user_id").notNull().unique(), // One preference record per user
+    defaultSources: text("default_sources"), // Comma-separated list of preferred sources
+    defaultLanguage: text("default_language").default("en"), // Preferred language for articles
+    defaultSearchTerm: text("default_search_term"), // Default search term
+    updatedAt: text("updated_at")
+        .notNull()
+        .default(sql`CURRENT_TIMESTAMP`),
+});
+
+/**
+ * Search history table schema
+ * Tracks user search queries for suggestions and analytics
+ */
+export const searchHistory = sqliteTable("search_history", {
+    id: int("id").primaryKey({ autoIncrement: true }),
+    userId: int("user_id").notNull(), // User who performed the search
+    searchQuery: text("search_query").notNull(), // The search term/query
+    filters: text("filters"), // JSON string of filters used (date, source, etc.)
+    resultCount: int("result_count"), // Number of results returned
+    createdAt: text("created_at")
+        .notNull()
+        .default(sql`CURRENT_TIMESTAMP`),
+});

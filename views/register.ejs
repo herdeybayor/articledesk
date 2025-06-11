@@ -1,0 +1,95 @@
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Register</h2>
+            </div>
+            <div class="card-body">
+                <form id="register-form">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required
+                            minlength="6">
+                        <div class="form-text">Password must be at least 6 characters</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm-password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm-password" name="confirmPassword"
+                            required>
+                    </div>
+                    <div class="alert alert-danger d-none" id="register-error"></div>
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Already have an account? <a href="/login">Login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const registerForm = document.getElementById('register-form');
+        const registerError = document.getElementById('register-error');
+
+        // No need to check localStorage token anymore since we're using cookies
+        // which are automatically sent with requests
+
+        registerForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Clear previous errors
+            registerError.classList.add('d-none');
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                registerError.textContent = 'Passwords do not match';
+                registerError.classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store token in localStorage for API requests that need Bearer token
+                    // (this is optional since we're using cookies now)
+                    localStorage.setItem('token', data.token);
+
+                    // Redirect to home page
+                    window.location.href = '/';
+                } else {
+                    // Show error message
+                    registerError.textContent = data.error || 'Registration failed';
+                    registerError.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                registerError.textContent = 'An error occurred. Please try again.';
+                registerError.classList.remove('d-none');
+            }
+        });
+    });
+</script>

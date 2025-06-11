@@ -1,0 +1,343 @@
+<h1 class="mb-4">Search Articles</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="search-form">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="search-query" class="form-label">Keyword or Phrase</label>
+                            <input type="text" class="form-control" id="search-query" name="q" value="<%= query %>"
+                                placeholder="Enter keywords...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="from-date" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="from-date" name="from">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="to-date" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="to-date" name="to">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <label for="source-select" class="form-label">Source</label>
+                            <select class="form-select" id="source-select" name="source">
+                                <option value="">All Sources</option>
+                                <!-- Sources will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="language-select" class="form-label">Language</label>
+                            <select class="form-select" id="language-select" name="language">
+                                <option value="">All Languages</option>
+                                <option value="en">English</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="es">Spanish</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="search-results-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 id="results-heading">Search Results</h2>
+        <div id="pagination-info" class="text-muted"></div>
+    </div>
+
+    <div class="row" id="search-results">
+        <!-- Results will be loaded here -->
+        <div class="col-12 text-center my-5">
+            <p class="text-muted">Enter a search term to find articles</p>
+        </div>
+    </div>
+
+    <nav aria-label="Search results pages">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination will be generated here -->
+        </ul>
+    </nav>
+</div>
+
+<template id="article-template">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <img src="" class="card-img-top article-image" alt="Article image">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title article-title"></h5>
+                <p class="text-muted mb-1 article-source"></p>
+                <p class="text-muted mb-2 article-date"></p>
+                <p class="card-text article-description"></p>
+                <div class="mt-auto">
+                    <a href="#" class="btn btn-primary article-link" target="_blank">Read More</a>
+                    <button class="btn btn-outline-primary bookmark-btn ms-2" data-id="">
+                        <i class="bi bi-bookmark"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    let currentPage = 1;
+    let currentQuery = {};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load sources for filter
+        loadSources();
+
+        // Set up the search form
+        const searchForm = document.getElementById('search-form');
+        searchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(searchForm);
+            const params = {};
+
+            for (const [key, value] of formData.entries()) {
+                if (value) params[key] = value;
+            }
+
+            currentQuery = params;
+            currentPage = 1;
+            searchArticles();
+        });
+
+        // Check if there's a query parameter already
+        const searchQuery = document.getElementById('search-query').value;
+        if (searchQuery) {
+            currentQuery.q = searchQuery;
+            searchArticles();
+        }
+
+        // Handle pagination clicks
+        document.getElementById('pagination').addEventListener('click', function (e) {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                const page = e.target.dataset.page;
+                if (page) {
+                    currentPage = parseInt(page);
+                    searchArticles();
+                }
+            }
+        });
+
+        // Handle bookmark clicks
+        document.getElementById('search-results').addEventListener('click', function (e) {
+            if (e.target.closest('.bookmark-btn')) {
+                e.preventDefault();
+                const btn = e.target.closest('.bookmark-btn');
+                const articleId = btn.dataset.id;
+                toggleBookmark(articleId, btn);
+            }
+        });
+    });
+
+    // Load sources for the filter dropdown
+    async function loadSources() {
+        try {
+            const response = await fetch('/api/articles/sources');
+            const sources = await response.json();
+
+            const sourceSelect = document.getElementById('source-select');
+            sources.forEach(source => {
+                const option = document.createElement('option');
+                option.value = source;
+                option.textContent = source;
+                sourceSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading sources:', error);
+        }
+    }
+
+    // Search articles with the current query and page
+    async function searchArticles() {
+        try {
+            // Show loading state
+            document.getElementById('search-results').innerHTML = `
+    <div class="col-12 text-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    `;
+
+            // Build query string
+            const params = new URLSearchParams({ ...currentQuery, page: currentPage });
+            const response = await fetch('/api/articles/search?' + params.toString());
+            const data = await response.json();
+
+            // Update results heading
+            document.getElementById('results-heading').textContent =
+                data.articles.length ? 'Search Results' : 'No Results Found';
+
+            // Update pagination info
+            const pagination = data.pagination;
+            if (pagination) {
+                document.getElementById('pagination-info').textContent =
+                    `Showing ${(pagination.page - 1) * pagination.limit + 1}-${Math.min(pagination.page * pagination.limit,
+                        pagination.total)} of ${pagination.total} results`;
+
+                // Generate pagination links
+                generatePagination(pagination);
+            }
+
+            // Render articles
+            if (data.articles.length > 0) {
+                renderArticles(data.articles);
+            } else {
+                document.getElementById('search-results').innerHTML = `
+    <div class="col-12 text-center my-5">
+        <p>No articles found. Try different search terms or filters.</p>
+    </div>
+    `;
+            }
+        } catch (error) {
+            console.error('Error searching articles:', error);
+            document.getElementById('search-results').innerHTML = `
+    <div class="col-12 text-center my-5">
+        <p class="text-danger">Error searching articles. Please try again later.</p>
+    </div>
+        `;
+        }
+    }
+
+    // Generate pagination links
+    function generatePagination(pagination) {
+        const paginationEl = document.getElementById('pagination');
+        paginationEl.innerHTML = '';
+
+        // Don't show pagination if only one page
+        if (pagination.pages <= 1) { return; }
+        // Previous button
+        const prevLi = document.createElement('li');
+        prevLi.className = 'page-item' + (pagination.page <= 1 ? ' disabled' : '');
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.dataset.page = pagination.page - 1;
+        prevLink.innerHTML = '&laquo;';
+        prevLi.appendChild(prevLink);
+        paginationEl.appendChild(prevLi);
+        // Page numbers
+        const startPage = Math.max(1, pagination.page - 2);
+        const endPage = Math.min(pagination.pages, pagination.page + 2);
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (i === pagination.page ? ' active' : '');
+            const link = document.createElement('a');
+            link.className = 'page-link';
+            link.href = '#';
+            link.textContent = i;
+            link.dataset.page = i;
+            li.appendChild(link);
+            paginationEl.appendChild(li);
+        }
+        // Next button
+        const nextLi = document.createElement('li');
+        nextLi.className = 'page-item' + (pagination.page >= pagination.pages ? 'disabled' : '');
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.dataset.page = pagination.page + 1;
+        nextLink.innerHTML = '&raquo;';
+        nextLi.appendChild(nextLink);
+        paginationEl.appendChild(nextLi);
+    }
+
+    // Render articles using the template
+    function renderArticles(articles) {
+        const container = document.getElementById('search-results');
+        container.innerHTML = '';
+        const template = document.getElementById('article-template');
+
+        articles.forEach(article => {
+            const clone = template.content.cloneNode(true);
+
+            // Set article data
+            clone.querySelector('.article-title').textContent = article.title;
+            clone.querySelector('.article-source').textContent = article.sourceName;
+            clone.querySelector('.article-date').textContent = new Date(article.publishedAt).toLocaleDateString();
+            clone.querySelector('.article-description').textContent = article.description;
+            clone.querySelector('.article-link').href = article.url;
+
+            // Set article image or fallback
+            const imgElement = clone.querySelector('.article-image');
+            if (article.urlToImage) {
+                imgElement.src = article.urlToImage;
+            } else {
+                imgElement.src = '/images/news-placeholder.png';
+            }
+            imgElement.onerror = function () {
+                this.src = '/images/news-placeholder.png';
+            };
+
+            // Set bookmark button data
+            const bookmarkBtn = clone.querySelector('.bookmark-btn');
+            bookmarkBtn.dataset.id = article.id;
+
+            container.appendChild(clone);
+        });
+    }
+
+    // Toggle bookmark
+    async function toggleBookmark(articleId, button) {
+        // We don't need to check for token since we're using cookies
+        // but keep localStorage token for compatibility with API requests
+        const token = localStorage.getItem('token');
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // Add Authorization header if token exists in localStorage
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            const response = await fetch('/api/bookmarks', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ articleId })
+            });
+
+            if (response.ok) {
+                button.innerHTML = '<i class="bi bi-bookmark-fill"></i> Saved';
+                button.classList.replace('btn-outline-primary', 'btn-success');
+            } else {
+                const data = await response.json();
+
+                // If unauthorized, redirect to login
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // If already bookmarked, show as saved
+                if (response.status === 409) {
+                    button.innerHTML = '<i class="bi bi-bookmark-fill"></i> Saved';
+                    button.classList.replace('btn-outline-primary', 'btn-success');
+                } else {
+                    alert(data.error || 'Failed to save bookmark');
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+            alert('Failed to save bookmark. Please try again.');
+        }
+    }
+</script>
