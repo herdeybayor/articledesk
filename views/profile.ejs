@@ -1,0 +1,126 @@
+<h1 class="mb-4">My Profile</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4 text-center">
+                    <div class="avatar-placeholder bg-primary text-white rounded-circle mb-3">
+                        <span>
+                            <%= user.name.charAt(0).toUpperCase() %>
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Name</label>
+                    <p>
+                        <%= user.name %>
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email</label>
+                    <p>
+                        <%= user.email %>
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Account Created</label>
+                    <p id="join-date">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Account Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-around text-center">
+                    <div class="mb-3">
+                        <h1 id="bookmark-count" class="display-4">...</h1>
+                        <p class="text-muted">Saved Articles</p>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="/bookmarks" class="btn btn-primary">
+                        <i class="bi bi-bookmark"></i> View My Bookmarks
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Danger Zone</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Permanently delete your account and all data associated with it.</p>
+                <button id="delete-account-btn" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i> Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-placeholder {
+        width: 100px;
+        height: 100px;
+        line-height: 100px;
+        font-size: 2.5rem;
+        display: inline-block;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch bookmark count
+        fetchBookmarkCount();
+
+        // Delete account button (just showing alert for now)
+        const deleteBtn = document.getElementById('delete-account-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function () {
+                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                    alert('This feature is not yet implemented.');
+                    // TODO: Implement account deletion
+                }
+            });
+        }
+    });
+
+    // Fetch the number of bookmarks for this user
+    async function fetchBookmarkCount() {
+        try {
+            const token = localStorage.getItem('token');
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            const response = await fetch('/api/bookmarks/count', {
+                headers: headers
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('bookmark-count').textContent = data.count;
+            } else {
+                document.getElementById('bookmark-count').textContent = '0';
+            }
+
+            // Set a placeholder join date (this would normally come from the API)
+            document.getElementById('join-date').textContent = new Date().toLocaleDateString();
+
+        } catch (error) {
+            console.error('Error fetching bookmark count:', error);
+            document.getElementById('bookmark-count').textContent = '0';
+        }
+    }
+</script>

@@ -1,4 +1,4 @@
-# News Bookmark
+# ArticleDesk
 
 A web application for searching news articles and saving them as bookmarks for later reading.
 
@@ -82,7 +82,7 @@ A web application for searching news articles and saving them as bookmarks for l
 ## Project Structure
 
 ```
-news-bookmark/
+articledesk/
 ├── public/               # Static assets
 │   └── css/              # Stylesheets
 ├── src/                  # Application source code

@@ -102,6 +102,21 @@ router.post("/", async (req, res) => {
 });
 
 /**
+ * Get bookmark count for the current user
+ * GET /api/bookmarks/count
+ */
+router.get("/count", async (req, res) => {
+    try {
+        const count = await db.select({ count: bookmarks.id }).from(bookmarks).where(eq(bookmarks.userId, req.user.id));
+
+        res.json({ count: count[0].count });
+    } catch (error) {
+        console.error("Error counting bookmarks:", error);
+        res.status(500).json({ error: "Failed to count bookmarks" });
+    }
+});
+
+/**
  * Remove a bookmark
  * DELETE /api/bookmarks/:id
  */

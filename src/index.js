@@ -57,9 +57,8 @@ app.use("/api/bookmarks", bookmarkRoutes);
 
 // View Routes
 app.get("/", (req, res) => {
-    console.log("req.user", req.user);
     res.render("index", {
-        title: "News Bookmark",
+        title: "📰 ArticleDesk",
         user: req.user || null,
     });
 });
@@ -99,6 +98,16 @@ app.get("/register", (req, res) => {
     res.render("register", {
         title: "Register",
         user: null,
+    });
+});
+
+app.get("/profile", (req, res) => {
+    if (!req.user) {
+        return res.redirect("/login");
+    }
+    res.render("profile", {
+        title: "My Profile",
+        user: req.user,
     });
 });
 
