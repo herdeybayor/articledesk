@@ -107,9 +107,12 @@ router.post("/", async (req, res) => {
  */
 router.get("/count", async (req, res) => {
     try {
-        const count = await db.select({ count: bookmarks.id }).from(bookmarks).where(eq(bookmarks.userId, req.user.id));
+        const result = await db
+            .select({ count: db.fn.count(bookmarks.id) })
+            .from(bookmarks)
+            .where(eq(bookmarks.userId, req.user.id));
 
-        res.json({ count: count[0].count });
+        res.json({ count: Number(result[0].count) || 0 });
     } catch (error) {
         console.error("Error counting bookmarks:", error);
         res.status(500).json({ error: "Failed to count bookmarks" });

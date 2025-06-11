@@ -8,6 +8,7 @@ A web application for searching news articles and saving them as bookmarks for l
 -   **User Authentication**: Register and login to save your preferences
 -   **Bookmarks**: Save articles for later reading and manage your bookmark collection
 -   **Responsive Design**: Works on desktop and mobile devices
+-   **Automated Article Fetching**: Scheduled cron job to regularly fetch new articles
 
 ## Tech Stack
 
@@ -15,6 +16,7 @@ A web application for searching news articles and saving them as bookmarks for l
 -   **Frontend**: EJS templates, Bootstrap 5, JavaScript
 -   **Database**: SQLite (via Drizzle ORM)
 -   **API**: NewsAPI for article fetching
+-   **Scheduling**: node-cron for automated tasks
 
 ## Setup
 
@@ -39,15 +41,13 @@ A web application for searching news articles and saving them as bookmarks for l
     npm install
     ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Create a `.env` file based on the provided example:
 
     ```
-    PORT=3000
-    JWT_SECRET=your_jwt_secret_key
-    NEWS_API_KEY=your_newsapi_key
-    DB_FILE_NAME=file:./local.db
-    NODE_ENV=development
+    cp .env.example .env
     ```
+
+    Then edit the `.env` file to add your actual API keys and secrets.
 
 4. Set up the database:
 
@@ -75,9 +75,33 @@ A web application for searching news articles and saving them as bookmarks for l
 -   `npm run dev`: Start development server with hot reload
 -   `npm run start`: Start production server
 -   `npm run fetch:articles`: Fetch and store latest articles
+-   `npm run cron:start`: Start the cron job for scheduled article fetching
+-   `npm run start:all`: Start both the main application and cron job
 -   `npm run db:generate`: Generate database migrations
 -   `npm run db:push`: Apply migrations to database
 -   `npm run db:studio`: Launch Drizzle Studio to visualize database
+
+## Production Deployment
+
+For production deployment, you can use the provided shell scripts:
+
+1. Start all services:
+
+    ```
+    ./start-production.sh
+    ```
+
+2. Stop all services:
+    ```
+    ./stop-production.sh
+    ```
+
+The production scripts will:
+
+-   Run the application in production mode
+-   Start the cron job for scheduled article fetching
+-   Save logs to the `logs/` directory
+-   Track process IDs for easy management
 
 ## Project Structure
 
@@ -85,13 +109,17 @@ A web application for searching news articles and saving them as bookmarks for l
 articledesk/
 ├── public/               # Static assets
 │   └── css/              # Stylesheets
+├── logs/                 # Log files for production
 ├── src/                  # Application source code
 │   ├── middleware/       # Express middleware
 │   ├── routes/           # API routes
 │   ├── fetch-articles.js # Script to fetch articles
+│   ├── cron-fetch.js     # Cron job for scheduled fetching
 │   ├── index.js          # Main application entry
 │   └── schema.js         # Database schema
 ├── views/                # EJS templates
+├── start-production.sh   # Production startup script
+├── stop-production.sh    # Production shutdown script
 ├── .env                  # Environment variables
 └── package.json          # Dependencies and scripts
 ```
