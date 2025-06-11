@@ -62,18 +62,32 @@ async function saveArticlesToDb(articlesData) {
             content: article.content || "",
         }));
 
-        console.log(`Saving ${articlesToInsert.length} articles to database...`);
+        console.log(`Processing ${articlesToInsert.length} articles...`);
+
+        // Get all existing article URLs from the database
+        const existingArticles = await db.select({ url: articles.url }).from(articles);
+        const existingUrls = new Set(existingArticles.map((a) => a.url));
+
+        // Filter out articles that already exist in the database
+        const newArticles = articlesToInsert.filter((article) => !existingUrls.has(article.url));
+
+        console.log(`Found ${articlesToInsert.length - newArticles.length} existing articles, ${newArticles.length} new articles to save.`);
+
+        if (newArticles.length === 0) {
+            console.log("No new articles to save.");
+            return 0;
+        }
 
         // Insert articles in batches to avoid exceeding SQLite limits
         const batchSize = 50;
-        for (let i = 0; i < articlesToInsert.length; i += batchSize) {
-            const batch = articlesToInsert.slice(i, i + batchSize);
-            await db.insert(articles).values(batch).onConflictDoNothing();
-            console.log(`Saved batch ${i / batchSize + 1}/${Math.ceil(articlesToInsert.length / batchSize)}`);
+        for (let i = 0; i < newArticles.length; i += batchSize) {
+            const batch = newArticles.slice(i, i + batchSize);
+            await db.insert(articles).values(batch);
+            console.log(`Saved batch ${i / batchSize + 1}/${Math.ceil(newArticles.length / batchSize)}`);
         }
 
         console.log("Articles saved successfully!");
-        return articlesToInsert.length;
+        return newArticles.length;
     } catch (error) {
         console.error("Error saving articles to database:", error);
         throw error;
