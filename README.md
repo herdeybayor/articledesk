@@ -50,8 +50,8 @@ If you prefer to set up manually, follow these steps:
 1. Clone the repository:
 
     ```
-    git clone <repository-url>
-    cd news-bookmark
+    git clone https://github.com/herdeybayor/articledesk.git
+    cd articledesk
     ```
 
 2. Install dependencies:
