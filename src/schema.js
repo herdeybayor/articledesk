@@ -1,29 +1,36 @@
 import { sql } from "drizzle-orm";
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+/**
+ * Users table schema
+ * Stores user authentication and profile information
+ */
 export const users = sqliteTable("users", {
     id: int("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
-    email: text("email").notNull().unique(),
-    password: text("password").notNull(),
-    authToken: text("auth_token"),
+    email: text("email").notNull().unique(), // Email must be unique for login
+    password: text("password").notNull(), // Stores hashed password
     createdAt: text("created_at")
         .notNull()
-        .default(sql`CURRENT_TIMESTAMP`),
+        .default(sql`CURRENT_TIMESTAMP`), // Automatic creation timestamp
     updatedAt: text("updated_at")
         .notNull()
-        .default(sql`CURRENT_TIMESTAMP`),
+        .default(sql`CURRENT_TIMESTAMP`), // Last updated timestamp
 });
 
+/**
+ * Articles table schema
+ * Stores news articles information
+ */
 export const articles = sqliteTable("articles", {
     id: int("id").primaryKey({ autoIncrement: true }),
-    sourceId: text("source_id"),
-    sourceName: text("source_name").notNull(),
-    author: text("author"),
-    title: text("title").notNull(),
-    description: text("description").notNull(),
-    url: text("url").notNull(),
-    urlToImage: text("url_to_image"),
-    publishedAt: text("published_at").notNull(),
-    content: text("content").notNull(),
+    sourceId: text("source_id"), // ID of the news source
+    sourceName: text("source_name").notNull(), // Name of the news source
+    author: text("author"), // Article author (optional)
+    title: text("title").notNull(), // Article title
+    description: text("description").notNull(), // Short description or summary
+    url: text("url").notNull(), // Link to the original article
+    urlToImage: text("url_to_image"), // Featured image URL (optional)
+    publishedAt: text("published_at").notNull(), // Publication date
+    content: text("content").notNull(), // Article content
 });

@@ -1,7 +1,26 @@
 @baseURL = http://localhost:3000
 
-### Home
+### Home - Get all articles
 GET {{baseURL}}
 
-### Health
+### Health check
 GET {{baseURL}}/health
+
+### Register a new user
+POST {{baseURL}}/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Login with existing user
+POST {{baseURL}}/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}

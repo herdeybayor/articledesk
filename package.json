@@ -25,9 +25,11 @@
     },
     "dependencies": {
         "@libsql/client": "^0.15.9",
+        "bcryptjs": "^3.0.2",
         "date-fns": "^4.1.0",
         "drizzle-orm": "^0.44.2",
         "express": "^5.1.0",
+        "jsonwebtoken": "^9.0.2",
         "node-fetch": "^3.3.2"
     }
 }
