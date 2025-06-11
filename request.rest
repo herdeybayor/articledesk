@@ -1,4 +1,8 @@
 @baseURL = http://localhost:3000
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzQ5NjQ5NzU5LCJleHAiOjE3NTIyNDE3NTl9.px31Pu35JbZLTq6BcpYbnkadVK58o_zIgLN4u413nzQ
+
+### Home
+GET {{baseURL}}
 
 ### Get all articles (with pagination)
 GET {{baseURL}}/articles?page=1&limit=10
@@ -33,3 +37,24 @@ Content-Type: application/json
   "email": "test@example.com",
   "password": "password123"
 }
+
+### Get user profile (protected)
+GET {{baseURL}}/user/profile
+Authorization: Bearer {{authToken}}
+
+### Get user bookmarks (protected)
+GET {{baseURL}}/bookmarks
+Authorization: Bearer {{authToken}}
+
+### Add bookmark (protected)
+POST {{baseURL}}/bookmarks
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "articleId": 49
+}
+
+### Delete bookmark (protected)
+DELETE {{baseURL}}/bookmarks/1
+Authorization: Bearer {{authToken}}
