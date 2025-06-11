@@ -1,13 +1,22 @@
 @baseURL = http://localhost:3000
 
-### Home - Get all articles
-GET {{baseURL}}
+### Get all articles (with pagination)
+GET {{baseURL}}/articles?page=1&limit=10
+
+### Search articles
+GET {{baseURL}}/articles/search?query=technology&page=1&limit=10
+
+### Search by author
+GET {{baseURL}}/articles/search?author=John&limit=5
+
+### Search by source
+GET {{baseURL}}/articles/search?source=BBC&page=1&limit=10
 
 ### Health check
 GET {{baseURL}}/health
 
 ### Register a new user
-POST {{baseURL}}/register
+POST {{baseURL}}/auth/register
 Content-Type: application/json
 
 {
@@ -17,7 +26,7 @@ Content-Type: application/json
 }
 
 ### Login with existing user
-POST {{baseURL}}/login
+POST {{baseURL}}/auth/login
 Content-Type: application/json
 
 {

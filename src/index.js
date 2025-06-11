@@ -4,7 +4,8 @@ import express from "express";
 import { drizzle } from "drizzle-orm/libsql";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { eq } from "drizzle-orm";
+import { eq, like, and, or } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 import * as schema from "./schema.js";
 
@@ -18,19 +19,89 @@ const port = process.env.PORT || 3000;
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
-// Route to get all articles
-app.get("/", async (req, res) => {
+// Route to home
+app.get("/", (_, res) => {
+    res.send("<h1>Welcome to the ArticleDesk</h1>");
+});
+
+// Route to get all articles with optional pagination
+app.get("/articles", async (req, res) => {
     try {
-        const articles = await db.select().from(schema.articles);
-        res.json(articles);
+        const { page = 1, limit = 10 } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const articles = await db.select().from(schema.articles).limit(parseInt(limit)).offset(offset);
+
+        const totalCount = await db.select({ count: sql`count(*)` }).from(schema.articles);
+
+        res.json({
+            articles,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalCount: totalCount[0].count,
+                totalPages: Math.ceil(totalCount[0].count / parseInt(limit)),
+            },
+        });
     } catch (error) {
         console.error("Error fetching articles:", error);
         res.status(500).json({ error: "Failed to fetch articles" });
     }
 });
 
+// Route to search articles with various filters
+app.get("/articles/search", async (req, res) => {
+    try {
+        const { query, author, source, page = 1, limit = 10 } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+        let conditions = [];
+
+        // Add search conditions based on provided parameters
+        if (query) {
+            conditions.push(or(like(schema.articles.title, `%${query}%`), like(schema.articles.description, `%${query}%`), like(schema.articles.content, `%${query}%`)));
+        }
+
+        if (author) {
+            conditions.push(like(schema.articles.author, `%${author}%`));
+        }
+
+        if (source) {
+            conditions.push(or(like(schema.articles.sourceId, `%${source}%`), like(schema.articles.sourceName, `%${source}%`)));
+        }
+
+        // Combine all conditions with AND
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+        // Execute the query with filters
+        const articles = await db.select().from(schema.articles).where(whereClause).limit(parseInt(limit)).offset(offset);
+
+        // Get total count for pagination info
+        const countQuery = db.select({ count: sql`count(*)` }).from(schema.articles);
+
+        if (whereClause) {
+            countQuery.where(whereClause);
+        }
+
+        const totalCount = await countQuery;
+
+        res.json({
+            articles,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalCount: totalCount[0].count,
+                totalPages: Math.ceil(totalCount[0].count / parseInt(limit)),
+            },
+        });
+    } catch (error) {
+        console.error("Error searching articles:", error);
+        res.status(500).json({ error: "Failed to search articles" });
+    }
+});
+
 // User registration endpoint
-app.post("/register", async (req, res) => {
+app.post("/auth/register", async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -74,7 +145,7 @@ app.post("/register", async (req, res) => {
 });
 
 // User login endpoint
-app.post("/login", async (req, res) => {
+app.post("/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
