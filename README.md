@@ -26,7 +26,26 @@ A web application for searching news articles and saving them as bookmarks for l
 -   npm or yarn
 -   NewsAPI key (get one at [newsapi.org](https://newsapi.org/))
 
-### Installation
+### Quick Installation
+
+For a quick automated setup, use the provided setup script:
+
+```
+./setup.sh
+```
+
+This script will:
+
+-   Check prerequisites
+-   Install dependencies
+-   Set up your environment file
+-   Configure the database
+-   Fetch initial articles
+-   Provide next steps
+
+### Manual Installation
+
+If you prefer to set up manually, follow these steps:
 
 1. Clone the repository:
 
@@ -118,12 +137,18 @@ articledesk/
 │   ├── index.js          # Main application entry
 │   └── schema.js         # Database schema
 ├── views/                # EJS templates
+├── setup.sh              # Local development setup script
 ├── start-production.sh   # Production startup script
 ├── stop-production.sh    # Production shutdown script
-├── .env                  # Environment variables
+├── .env.example          # Example environment variables
+├── .env                  # Environment variables (not in repo)
 └── package.json          # Dependencies and scripts
 ```
 
 ## License
 
 ISC
+
+```
+
+```
