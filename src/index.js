@@ -1,6 +1,10 @@
 import "dotenv/config"; // Load environment variables from .env file
 
 import express from "express";
+import { drizzle } from "drizzle-orm/libsql";
+
+const db = drizzle(process.env.DB_FILE_NAME);
+
 const app = express();
 const port = process.env.PORT || 3000;
 
