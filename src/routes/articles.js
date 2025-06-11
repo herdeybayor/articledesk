@@ -52,6 +52,20 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * Get sources for filtering
+ * GET /api/articles/sources
+ */
+router.get("/sources", async (req, res) => {
+    try {
+        const sources = await db.selectDistinct({ sourceName: articles.sourceName }).from(articles);
+        res.json(sources.map((s) => s.sourceName).sort());
+    } catch (error) {
+        console.error("Error fetching sources:", error);
+        res.status(500).json({ error: "Failed to fetch sources" });
+    }
+});
+
+/**
  * Search articles with filters
  * GET /api/articles/search?q=term&from=date&to=date&source=name&language=code
  */
@@ -128,11 +142,14 @@ router.get("/search", async (req, res) => {
  */
 router.get("/:id", async (req, res) => {
     try {
-        const article = await db
-            .select()
-            .from(articles)
-            .where(eq(articles.id, parseInt(req.params.id)))
-            .limit(1);
+        // Make sure id is a valid number
+        const articleId = parseInt(req.params.id);
+
+        if (isNaN(articleId)) {
+            return res.status(400).json({ error: "Invalid article ID. Must be a number." });
+        }
+
+        const article = await db.select().from(articles).where(eq(articles.id, articleId)).limit(1);
 
         if (!article.length) {
             return res.status(404).json({ error: "Article not found" });
@@ -142,20 +159,6 @@ router.get("/:id", async (req, res) => {
     } catch (error) {
         console.error("Error fetching article:", error);
         res.status(500).json({ error: "Failed to fetch article" });
-    }
-});
-
-/**
- * Get sources for filtering
- * GET /api/articles/sources
- */
-router.get("/sources", async (req, res) => {
-    try {
-        const sources = await db.selectDistinct({ sourceName: articles.sourceName }).from(articles);
-        res.json(sources.map((s) => s.sourceName));
-    } catch (error) {
-        console.error("Error fetching sources:", error);
-        res.status(500).json({ error: "Failed to fetch sources" });
     }
 });
 
