@@ -2,18 +2,16 @@ import "dotenv/config"; // Load environment variables from .env file
 
 import express from "express";
 import { drizzle } from "drizzle-orm/libsql";
+import * as schema from "./schema.js";
 
 const db = drizzle(process.env.DB_FILE_NAME);
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get("/", (req, res) => {
-    res.json({
-        status: "OK",
-        message: "Welcome to the API",
-        timestamp: new Date().toISOString(),
-    });
+app.get("/", async (req, res) => {
+    const articles = await db.select().from(schema.articles);
+    res.json(articles);
 });
 
 app.get("/health", (req, res) => {

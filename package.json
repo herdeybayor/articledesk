@@ -10,7 +10,8 @@
         "db:generate": "drizzle-kit generate",
         "db:migrate": "drizzle-kit migrate",
         "db:studio": "drizzle-kit studio",
-        "db:push": "drizzle-kit push"
+        "db:push": "drizzle-kit push",
+        "fetch:articles": "node src/fetch-articles.js"
     },
     "keywords": [],
     "author": "",
@@ -24,7 +25,9 @@
     },
     "dependencies": {
         "@libsql/client": "^0.15.9",
+        "date-fns": "^4.1.0",
         "drizzle-orm": "^0.44.2",
-        "express": "^5.1.0"
+        "express": "^5.1.0",
+        "node-fetch": "^3.3.2"
     }
 }
