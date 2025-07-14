@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+    app:
+        build:
+            context: .
+            target: production
+        container_name: news-bookmark-app
+        restart: unless-stopped
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+            - DB_FILE_NAME=/app/data/app.db
+            # Add your other environment variables here
+            # - JWT_SECRET=your_jwt_secret_here
+            # - NEWS_API_KEY=your_news_api_key_here
+        volumes:
+            # Persist database and logs
+            - app_data:/app/data
+            - app_logs:/app/logs
+        healthcheck:
+            test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        networks:
+            - app-network
+
+    # Development override
+    app-dev:
+        build:
+            context: .
+            target: development
+        container_name: news-bookmark-dev
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=development
+            - PORT=3000
+            - DB_FILE_NAME=/app/local.db
+        volumes:
+            - .:/app
+            - /app/node_modules
+        command: npm run dev
+        profiles:
+            - dev
+
+volumes:
+    app_data:
+        driver: local
+    app_logs:
+        driver: local
+
+networks:
+    app-network:
+        driver: bridge
