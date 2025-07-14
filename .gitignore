@@ -12,10 +12,10 @@ package-lock.json
 yarn.lock
 
 # Database
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
+# *.db
+# *.db-journal
+# *.sqlite
+# *.sqlite3
 
 # Logs
 logs/
